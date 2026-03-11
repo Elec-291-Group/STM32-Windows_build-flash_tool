@@ -1,0 +1,20 @@
+The MinGW temp file problem
+===========================
+
+arm-none-eabi-gcc (even from MSYS2's own packages) is a native Windows PE binary.
+When it links, its internal collect2.exe calls Windows API GetTempPath() to find
+a writable temp directory.
+
+The trap: MSYS2 bash sets TMP=/tmp (a POSIX path). Windows API can't resolve POSIX
+paths, so GetTempPath() falls all the way back to C:\Windows\ — which is read-only.
+
+Every fix we tried failed because:
+- Setting TMP="C:/Users/.../Temp" (forward slashes)  — Windows API rejected it
+- Setting TMP="C:\Users\.../Temp" (backslashes)       — MSYS2 intercepted and mangled it
+- MSYS2_ENV_CONV_EXCL="TMP:TEMP"                      — prevented mangling but format still wrong
+
+What finally worked:
+Set TMP="/d/tmp" (POSIX format pointing to a simple path on D:) WITHOUT MSYS2_ENV_CONV_EXCL,
+so MSYS2 could cleanly convert /d/tmp -> D:\tmp for the Windows PE process.
+Then run make from PowerShell where TMP=D:\tmp is already a native Windows path
+with no conversion at all.

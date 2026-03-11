@@ -33,7 +33,7 @@ $BinFile  = "$BuildDir\$ProjectName.bin"
 $ObjCopy  = "arm-none-eabi-objcopy"
 
 # --- Auto-find make.exe ------------------------------------------------------
-$Make = (Get-Command make -ErrorAction SilentlyContinue)?.Source
+$Make = (Get-Command make -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
 if (-not $Make) {
     $candidates = @(
         "D:\MSYS2\usr\bin\make.exe",
@@ -46,8 +46,8 @@ if (-not $Make) {
 if (-not $Make) { throw "make.exe not found. Add MSYS2 usr/bin to PATH." }
 
 # --- Fix MinGW linker temp file issue ----------------------------------------
-$TempDir = "$env:USERPROFILE\AppData\Local\Temp\stm32build"
-New-Item -ItemType Directory -Force $TempDir | Out-Null
+# Use Windows system temp dir (guaranteed to exist on every machine)
+$TempDir = "$env:USERPROFILE\AppData\Local\Temp"
 $env:TMP  = $TempDir
 $env:TEMP = $TempDir
 
